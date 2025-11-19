@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выбор цитаты</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background: #f5f5f5;
+            line-height: 1.4;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #1a1a1a;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        .search-box {
+            margin-bottom: 15px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        .quotes-list {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: #fafafa;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .quote-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        
+        .quote-item.selected {
+            border-color: #007AFF;
+            background: #e3f2fd;
+        }
+        
+        .quote-item.occupied {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            cursor: not-allowed;
+        }
+        
+        .quote-number {
+            display: inline-block;
+            background: #007AFF;
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 22px;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+        
+        .quote-text {
+            font-style: italic;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        
+        .quote-author {
+            text-align: right;
+            font-weight: 600;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .occupied-badge {
+            background: #ff3b30;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            float: right;
+        }
+        
+        .counter {
+            text-align: center;
+            margin: 10px 0;
+            color: #666;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .submit-btn:disabled {
+            background: #c7c7cc;
+            cursor: not-allowed;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            display: none;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 12px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stat-number {
+            font-size: 16px;
+            font-weight: bold;
+            color: #007AFF;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Выбор цитаты</h1>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="availableCount">60</div>
+                <div>Доступно</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="occupiedCount">0</div>
+                <div>Выбрано</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="remainingCount">60</div>
+                <div>Осталось</div>
+            </div>
+        </div>
+        
+        <form id="quotesForm" action="https://formspree.io/f/mblwokbb" method="POST">
+            <div class="form-group">
+                <label for="surname">Ваша фамилия:</label>
+                <input type="text" id="surname" name="surname" required placeholder="Введите фамилию">
+            </div>
+            
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchQuotes" placeholder="Поиск цитат...">
+            </div>
+            
+            <div class="counter">
+                Выбрано: <span id="selectedCount">0</span> из 1
+            </div>
+            
+            <div class="quotes-list" id="quotesContainer">
+                <!-- Цитаты загружаются здесь -->
+            </div>
+            
+            <input type="hidden" id="selectedQuoteNumber" name="quoteNumber">
+            <input type="hidden" id="selectedQuoteText" name="quoteText">
+            <input type="hidden" id="selectedQuoteAuthor" name="quoteAuthor">
+            
+            <button type="submit" class="submit-btn" id="submitBtn" disabled>Отправить выбор</button>
+        </form>
+        
+        <div id="successMessage" class="message success">
+            ✅ Спасибо! Ваш выбор сохранён.
+        </div>
+        
+        <div id="errorMessage" class="message error">
+            ❌ Ошибка! Попробуйте снова.
+        </div>
+        
+        <div id="warningMessage" class="message warning">
+            ⚠️ Цитата уже занята!
+        </div>
+    </div>
+
+    <script>
+        const quotes = [
+            "«Иногда думаешь: всё кончено, точка, а на самом деле — это начало. Только другой главы»|Илья Эренбург",
+            "«...И хотя всё кончилось, началось что-то новое»|Брет Истон Эллис",
+            "Я выбрал путь себе кратчайший и прямой. Быть самим собой.|Эдмон Ростан",
+            "Странная ты. Не странная. Просто делаю, что хочу.|Мацуо Монро",
+            "«Оставайтесь сами собой. Господь наделяет каждого из нас своим особым талантом»|Дж. Апдайк",
+            "«Вы смеётесь надо мной, потому что я отличаюсь от вас, а я смеюсь над вами, потому что вы не отличаетесь друг от друга»|М. Булгаков",
+            "«Всегда говори то, что думаешь, и делай то, что тебе кажется правильным»|Жан Рено",
+            "«Я — единственный на свете человек, которого мне бы хотелось узнать получше»|Оскар Уайльд",
+            "«Меня никогда не интересовало, что думают обо мне окружающие. Важно, что думаю я сам»|Никола Тесла",
+            "«Ты живёшь в своих поступках, а не в теле. Ты — это твои действия»|Антуан де Сент-Экзюпери",
+            "«Не хочу в будущем сожалеть о бездеятельности и колебаниях»|Анджей Сапковский",
+            "«Больше всего мне хочется стать таким человеком, который сумел бы сделать мир немного лучше»|Эрленд Лу",
+            "«Единственное счастье в жизни — это постоянное стремление вперёд!»|Эмиль Золя",
+            "«Пока человек не сдаётся, он сильнее своей судьбы»|Э.М. Ремарк",
+            "«Некоторых целей, вероятно, нельзя достигнуть. Но и не стремиться к ним тоже нельзя»|Анатолий Алексин",
+            "«Возьмите себе за правило: никогда не оглядывайтесь назад»|А.К. Дойл",
+            "«Когда человек любит подвиги, он всегда умеет их сделать»|М. Горький",
+            "«В глубине души я всегда была уверена, что могу добиться успеха»|А.К. Дойл",
+            "«Нельзя прожить свою жизнь для других. Надо выбрать то, что нужно именно тебе»|Николас Спаркс",
+            "«Ваша опора — в вас самих!»|Э.М. Ремарк",
+            "«Человек всё может... лишь бы захотел»|Максим Горький",
+            "«Что бы ни случилось, нужно помнить — это всего лишь жизнь, и мы прорвёмся!»|Дин Кунц",
+            "«Жизнь принадлежит тебе, и не будет для тебя ничего невозможного»|Марк Леви",
+            "«Не отступай перед трудностями. Смотри им прямо в лицо»|Чарльз Диккенс",
+            "«Каждая мечта тебе даётся вместе с силами, необходимыми для её осуществления»|Ричард Бах",
+            "«Возможно всё. На невозможное просто требуется больше времени»|Дэн Браун",
+            "«Если верить в победу, ты победишь, поскольку победа поверит в тебя»|Пауло Коэльо",
+            "«Если Вы хотите иметь то, что никогда не имели — начните делать то, что никогда не делали»|Ричард Бах",
+            "«Если тебе что-нибудь нужно, добивайся сам!»|Рэй Брэдбери",
+            "«Если быть — так быть лучшим!»|В. Каверин",
+            "А чем я тебе ещё нравлюсь? Тем, что ты не сдаёшься.|Дж. Апдайк",
+            "«Понимаешь, быть человеком — значит взять на себя какую-то ответственность»|Джон Стейнбек",
+            "«Человек способен на великие деяния. Но если при этом он не способен на великие чувства, он для меня не существует»|Альбер Камю",
+            "«Единственный рецепт для любого дела — быть искренним»|Сергей Бодров",
+            "«Вот мой секрет, он очень прост: зорко одно лишь сердце»|Антуан де Сент-Экзюпери",
+            "«Я пытаюсь жить так, чтобы ни о чём не жалеть»|Даррен Аронофски",
+            "«Величайшее в жизни счастье — это уверенность в том, что нас любят»|Виктор Гюго",
+            "«Не забывай: если ты по-настоящему захочешь стать счастливым, ты обязательно станешь им»|Эльчин Сафарли",
+            "«Я не хочу больше ни о чём узнавать. Теперь я хочу быть только счастливой»|Э.М. Ремарк",
+            "«Шагай гордо, улыбайся широко и весело»|Дэн Браун",
+            "«Всё будет прекрасно, потому что сказки, в которые мы верим, ещё живут на земле»|В. Каверин",
+            "«Немного здравого смысла, немного терпимости, немного чувства юмора»|Сомерсет Моэм",
+            "«Каждый человек в чём-нибудь да гений»|Аркадий и Борис Стругацкие",
+            "«Жизнь — это путь. У кого-то это путь до булочной и обратно, у кого-то — кругосветное путешествие»|Константин Хабенский",
+            "«Следуй своей дорогой, и пусть люди говорят, что хотят»|Данте Алигьери",
+            "«Есть только два способа прожить свою жизнь»|Альберт Эйнштейн",
+            "«Я думаю, что отметки — не самое главное в жизни»|Анна Гавальда",
+            "«Обещай мне, что всегда будешь помнить: ты храбрее, чем ты веришь»|А. Милн",
+            "«Себя надо любить и хвалить»|Макс Фрай",
+            "«Если когда-нибудь наступит день, когда мы не сможем быть вместе, сохрани меня в своём сердце»|А. Милн",
+            "В качестве кого же ты хочешь идти в мир? Просто как искорка жизни.|Э.М. Ремарк",
+            "«Я лишь умею отличать своих друзей от моих врагов»|А. Дюма",
+            "«Она смеётся! Разве не сделалось вдруг светлее везде и всюду?»|Э.М. Ремарк",
+            "«Она улыбнулась, и мне показалось, что весь мир стал светлее»|Э.М. Ремарк",
+            "«Мир ещё прекраснее, когда ты улыбаешься»|Н. Спаркс",
+            "«Никогда не отказывайся от того, что заставляет тебя улыбаться»|Хит Леджер",
+            "«Вы чудесный товарищ, милый Д'Артаньян»|А. Дюма",
+            "«Не бойся идти не туда — бойся никуда не идти»|Дмитрий Емец",
+            "«Ошибки — это знаки препинания в жизни»|Харуки Мураками",
+            "«Ошибки совершать не страшно. Главное, каждый раз ошибаться в чём-то новом»|Илон Маск"
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const quotesContainer = document.getElementById('quotesContainer');
+            const searchInput = document.getElementById('searchQuotes');
+            const selectedCount = document.getElementById('selectedCount');
+            const submitBtn = document.getElementById('submitBtn');
+            const surnameInput = document.getElementById('surname');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const warningMessage = document.getElementById('warningMessage');
+            const selectedQuoteNumber = document.getElementById('selectedQuoteNumber');
+            const selectedQuoteText = document.getElementById('selectedQuoteText');
+            const selectedQuoteAuthor = document.getElementById('selectedQuoteAuthor');
+            const availableCount = document.getElementById('availableCount');
+            const occupiedCount = document.getElementById('occupiedCount');
+            const remainingCount = document.getElementById('remainingCount');
+            
+            let selectedQuote = null;
+            let occupiedQuotes = JSON.parse(localStorage.getItem('occupiedQuotes') || '{}');
+            let userSubmissions = JSON.parse(localStorage.getItem('userSubmissions') || '{}');
+            
+            function updateStats() {
+                const totalQuotes = quotes.length;
+                const occupied = Object.keys(occupiedQuotes).length;
+                const remaining = totalQuotes - occupied;
+                
+                availableCount.textContent = totalQuotes;
+                occupiedCount.textContent = occupied;
+                remainingCount.textContent = remaining;
+            }
+            
+            function renderQuotes(filteredQuotes = quotes) {
+                quotesContainer.innerHTML = '';
+                
+                filteredQuotes.forEach((quoteData, index) => {
+                    const [text, author] = quoteData.split('|');
+                    const isOccupied = occupiedQuotes[index];
+                    
+                    const quoteElement = document.createElement('div');
+                    quoteElement.className = 'quote-item';
+                    if (isOccupied) quoteElement.className += ' occupied';
+                    
+                    quoteElement.innerHTML = `
+                        <div class="quote-text">
+                            <span class="quote-number">${index + 1}</span>
+                            ${text}
+                        </div>
+                        <div class="quote-author">${author}</div>
+                        ${isOccupied ? '<div class="occupied-badge">ЗАНЯТО</div>' : ''}
+                    `;
+                    
+                    if (!isOccupied) {
+                        quoteElement.onclick = function() {
+                            selectQuote(this, index);
+                        };
+                    } else {
+                        quoteElement.onclick = function() {
+                            showWarning();
+                        };
+                    }
+                    
+                    quotesContainer.appendChild(quoteElement);
+                });
+                
+                updateStats();
+            }
+            
+            function selectQuote(element, index) {
+                document.querySelectorAll('.quote-item').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                element.classList.add('selected');
+                selectedQuote = index;
+                selectedCount.textContent = '1';
+                
+                const [text, author] = quotes[index].split('|');
+                selectedQuoteNumber.value = index + 1;
+                selectedQuoteText.value = text;
+                selectedQuoteAuthor.value = author;
+                
+                updateSubmitButton();
+            }
+            
+            function showWarning() {
+                warningMessage.style.display = 'block';
+                setTimeout(() => {
+                    warningMessage.style.display = 'none';
+                }, 3000);
+            }
+            
+            function updateSubmitButton() {
+                const userSurname = surnameInput.value.trim().toLowerCase();
+                const hasSubmitted = userSubmissions[userSurname];
+                
+                if (selectedQuote !== null && surnameInput.value.trim() !== '' && !hasSubmitted) {
+                    submitBtn.disabled = false;
+                } else {
+                    submitBtn.disabled = true;
+                }
+                
+                if (hasSubmitted) {
+                    surnameInput.disabled = true;
+                    submitBtn.disabled = true;
+                    successMessage.textContent = 'Вы уже отправили форму!';
+                    successMessage.style.display = 'block';
+                }
+            }
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                
+                if (searchTerm === '') {
+                    renderQuotes();
+                    return;
+                }
+                
+                const filtered = quotes.filter(quote => 
+                    quote.toLowerCase().includes(searchTerm)
+                );
+                
+                renderQuotes(filtered);
+            });
+            
+            surnameInput.addEventListener('input', updateSubmitButton);
+            
+            document.getElementById('quotesForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (selectedQuote === null) {
+                    alert('Выберите цитату!');
+                    return;
+                }
+                
+                const userSurname = surnameInput.value.trim();
+                if (!userSurname) {
+                    alert('Введите фамилию!');
+                    return;
+                }
+                
+                if (occupiedQuotes[selectedQuote]) {
+                    showWarning();
+                    return;
+                }
+                
+                if (userSubmissions[userSurname.toLowerCase()]) {
+                    alert('Вы уже отправляли форму!');
+                    return;
+                }
+                
+                const form = this;
+                const formData = new FormData(form);
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        occupiedQuotes[selectedQuote] = {
+                            surname: userSurname,
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        userSubmissions[userSurname.toLowerCase()] = {
+                            quoteNumber: selectedQuote + 1,
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        localStorage.setItem('occupiedQuotes', JSON.stringify(occupiedQuotes));
+                        localStorage.setItem('userSubmissions', JSON.stringify(userSubmissions));
+                        
+                        successMessage.textContent = 'Спасибо! Ваш выбор сохранён.';
+                        successMessage.style.display = 'block';
+                        errorMessage.style.display = 'none';
+                        
+                        surnameInput.disabled = true;
+                        submitBtn.disabled = true;
+                        
+                        renderQuotes();
+                        
+                    } else {
+                        throw new Error('Ошибка отправки');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    successMessage.style.display = 'none';
+                    errorMessage.style.display = 'block';
+                });
+            });
+            
+            updateStats();
+            renderQuotes();
+        });
+    </script>
+</body>
+</html>
